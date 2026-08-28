@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
-  ArrowDown,
-  ArrowUp,
   Home,
   Zap,
   Phone,
@@ -21,14 +19,7 @@ import {
   LayoutDashboard,
   Wallet,
   Receipt,
-  Settings,
-  Bell,
   Search,
-  SlidersHorizontal,
-  CheckCircle2,
-  Clock,
-  User,
-  Users,
 } from "lucide-react";
 import { getAllCategories, getMonthSummary, getNextMonthForecast } from "@/lib/actions";
 import { CategoryData, MonthSummary, NextMonthForecast } from "@/types";
@@ -91,20 +82,20 @@ export default function HomeDashboardPage() {
     if (selectedMonth < 12) setSelectedMonth(selectedMonth + 1);
   };
 
-  // Flatten transactions for desktop table
   const allTransactions = summary?.categories.flatMap((c) => c.transactions) || [];
   const filteredTransactions = allTransactions.filter((tx) =>
     tx.concept.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row relative">
+      {/* PWA floating installer */}
       <PWAInstaller />
 
       {/* ========================================================================= */}
       {/* DESKTOP SIDEBAR (Stitch "Finanzas Pro") */}
       {/* ========================================================================= */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200/80 p-6 justify-between shrink-0 h-screen sticky top-0">
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200/80 p-6 justify-between shrink-0 min-h-screen sticky top-0">
         <div className="space-y-8">
           {/* Logo / Profile */}
           <div className="flex items-center gap-3">
@@ -219,7 +210,7 @@ export default function HomeDashboardPage() {
           </div>
         </header>
 
-        {/* MOBILE TOP BAR (Stitch: < Enero 2026 > with bell icon) */}
+        {/* MOBILE TOP BAR */}
         <header className="lg:hidden px-5 pt-5 pb-3 flex items-center justify-between sticky top-0 bg-[#F8FAFC]/95 backdrop-blur-xs z-30">
           <button
             onClick={prevMonth}
@@ -261,10 +252,10 @@ export default function HomeDashboardPage() {
           ) : summary ? (
             <>
               {/* ================================================================= */}
-              {/* TOP CARDS ROW (Stitch Mobile & Desktop) */}
+              {/* TOP CARDS ROW */}
               {/* ================================================================= */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* 1. Stitch Dark Balance Card (Screen 3) */}
+                {/* 1. Stitch Dark Balance Card */}
                 <div className="bg-[#0F172A] text-white rounded-3xl p-6 shadow-lg space-y-4 relative overflow-hidden">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -295,7 +286,7 @@ export default function HomeDashboardPage() {
                   </div>
                 </div>
 
-                {/* 2. Stitch "Gasto por Persona" (División de Gastos 50%) */}
+                {/* 2. Stitch "Gasto por Persona" (50%) */}
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
@@ -342,14 +333,14 @@ export default function HomeDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Dual split progress bar (Navy 50% vs Mint 50%) */}
+                  {/* Dual progress bar */}
                   <div className="w-full h-2 rounded-full overflow-hidden flex bg-slate-100">
                     <div className="w-1/2 bg-[#0F172A] h-full" />
                     <div className="w-1/2 bg-[#10B981] h-full" />
                   </div>
                 </div>
 
-                {/* 3. Stitch Previsión & Gasto Total Card */}
+                {/* 3. Stitch Previsión & Gasto Total */}
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
@@ -385,7 +376,7 @@ export default function HomeDashboardPage() {
               </div>
 
               {/* ================================================================= */}
-              {/* DESGLOSE POR CATEGORÍA (Stitch Screens 3 & 4) */}
+              {/* DESGLOSE POR CATEGORÍA */}
               {/* ================================================================= */}
               <div id="budgets" className="space-y-3 pt-2">
                 <div className="flex items-center justify-between px-1">
@@ -400,7 +391,6 @@ export default function HomeDashboardPage() {
                   </Link>
                 </div>
 
-                {/* Grid of category items (Stitch style) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {summary.categories.map((item) => {
                     const percent =
@@ -451,7 +441,7 @@ export default function HomeDashboardPage() {
               </div>
 
               {/* ================================================================= */}
-              {/* DATA TABLE: TRANSACCIONES (Stitch Desktop Screen 1 & Mobile List) */}
+              {/* TRANSACCIONES DEL MES */}
               {/* ================================================================= */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -459,7 +449,6 @@ export default function HomeDashboardPage() {
                     Transacciones del Mes ({filteredTransactions.length})
                   </h3>
 
-                  {/* Search input in Stitch style */}
                   <div className="relative">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
@@ -532,7 +521,7 @@ export default function HomeDashboardPage() {
         </main>
       </div>
 
-      {/* Forecast Modal (Previsión Fin de Mes) */}
+      {/* Forecast Modal */}
       <ForecastModal
         isOpen={isForecastOpen}
         onClose={() => setIsForecastOpen(false)}
@@ -549,7 +538,7 @@ export default function HomeDashboardPage() {
         onSuccess={() => loadData(selectedMonth, selectedYear)}
       />
 
-      {/* Stitch Mobile Bottom Nav (hidden on desktop) */}
+      {/* Stitch Mobile Bottom Nav */}
       <div className="lg:hidden">
         <BottomNav
           onOpenQuickEntry={() => setIsQuickEntryOpen(true)}
