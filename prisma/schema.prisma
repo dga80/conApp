@@ -1,0 +1,51 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  name          String
+  icon          String
+  color         String
+  isFixed       Boolean       @default(false)
+  defaultBudget Float         @default(0)
+  order         Int           @default(0)
+  transactions  Transaction[]
+  createdAt     DateTime      @default(now())
+}
+
+model Transaction {
+  id                 String    @id @default(cuid())
+  type               String    @default("EXPENSE") // EXPENSE | INCOME
+  amount             Float
+  date               DateTime  @default(now())
+  year               Int       @default(2026)
+  month              Int       // 1 - 12
+  concept            String
+  paidBy             String    @default("SHARED") // PERSON_1 | PERSON_2 | SHARED
+  isRecurring        Boolean   @default(false)
+  installmentCurrent Int?
+  installmentTotal   Int?
+  notes              String?
+  categoryId         String?
+  category           Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model MonthlyIncome {
+  id            String   @id @default(cuid())
+  year          Int      @default(2026)
+  month         Int      // 1 - 12
+  person1Amount Float    @default(1200)
+  person2Amount Float    @default(1200)
+  createdAt     DateTime @default(now())
+
+  @@unique([year, month])
+}
