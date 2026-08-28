@@ -19,7 +19,7 @@ export function BottomNav({ onOpenQuickEntry, onOpenForecast }: BottomNavProps) 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 pb-safe shadow-lg">
       <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-between">
-        {/* 1. Overview */}
+        {/* 1. Resumen */}
         <Link
           href="/"
           className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
@@ -27,19 +27,19 @@ export function BottomNav({ onOpenQuickEntry, onOpenForecast }: BottomNavProps) 
           }`}
         >
           <LayoutGrid className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] font-medium tracking-tight">Overview</span>
+          <span className="text-[10px] font-medium tracking-tight">Resumen</span>
         </Link>
 
-        {/* 2. Budgets / Fijos */}
+        {/* 2. Presupuestos */}
         <Link
           href="/#budgets"
           className="flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-slate-600 transition-colors"
         >
           <Wallet className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] font-medium tracking-tight">Budgets</span>
+          <span className="text-[10px] font-medium tracking-tight">Presupuestos</span>
         </Link>
 
-        {/* 3. Center FAB: Stitch dark circular button */}
+        {/* 3. Botón central '+' */}
         <div className="flex items-center justify-center px-2">
           <button
             type="button"
@@ -51,7 +51,7 @@ export function BottomNav({ onOpenQuickEntry, onOpenForecast }: BottomNavProps) 
           </button>
         </div>
 
-        {/* 4. Trends (Annual Matrix) */}
+        {/* 4. Tendencias (Matriz Anual) */}
         <Link
           href="/annual"
           className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
@@ -59,10 +59,10 @@ export function BottomNav({ onOpenQuickEntry, onOpenForecast }: BottomNavProps) 
           }`}
         >
           <TrendingUp className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] font-medium tracking-tight">Trends</span>
+          <span className="text-[10px] font-medium tracking-tight">Tendencias</span>
         </Link>
 
-        {/* 5. Previsión / Settings */}
+        {/* 5. Previsión */}
         <button
           type="button"
           onClick={onOpenForecast}

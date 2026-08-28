@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   Plus,
@@ -12,16 +12,25 @@ import {
   GraduationCap,
   Activity,
   Package,
-  Calendar,
-  CreditCard,
-  User,
-  Users,
-  CheckCircle2,
-  ChevronRight,
+  Calendar as CalendarIcon,
+  Layers,
+  Sparkles,
 } from "lucide-react";
-import { CategoryData, CreateTransactionInput, PaidBy } from "@/types";
+import { CategoryData, CreateTransactionInput } from "@/types";
 import { createTransaction } from "@/lib/actions";
 import { addToOfflineQueue } from "@/lib/offline-storage";
+import { MONTH_NAMES_ES } from "@/lib/utils";
+
+const ICON_MAP: Record<string, React.ReactNode> = {
+  Home: <Home className="w-5 h-5 text-slate-700" />,
+  Zap: <Zap className="w-5 h-5 text-amber-500" />,
+  Phone: <Phone className="w-5 h-5 text-indigo-500" />,
+  ShieldCheck: <ShieldCheck className="w-5 h-5 text-purple-500" />,
+  ShoppingCart: <ShoppingCart className="w-5 h-5 text-emerald-600" />,
+  GraduationCap: <GraduationCap className="w-5 h-5 text-rose-500" />,
+  Activity: <Activity className="w-5 h-5 text-orange-500" />,
+  Package: <Package className="w-5 h-5 text-slate-500" />,
+};
 
 interface QuickEntryDrawerProps {
   isOpen: boolean;
@@ -32,307 +41,294 @@ interface QuickEntryDrawerProps {
   onSuccess?: () => void;
 }
 
-const ICON_MAP: Record<string, React.ReactNode> = {
-  Home: <Home className="w-5 h-5" />,
-  Zap: <Zap className="w-5 h-5" />,
-  Phone: <Phone className="w-5 h-5" />,
-  ShieldCheck: <ShieldCheck className="w-5 h-5" />,
-  ShoppingCart: <ShoppingCart className="w-5 h-5" />,
-  GraduationCap: <GraduationCap className="w-5 h-5" />,
-  Activity: <Activity className="w-5 h-5" />,
-  Package: <Package className="w-5 h-5" />,
-};
-
 export function QuickEntryDrawer({
   isOpen,
   onClose,
   categories,
-  defaultMonth = 1,
-  defaultYear = 2026,
+  defaultMonth,
+  defaultYear,
   onSuccess,
 }: QuickEntryDrawerProps) {
-  const [amount, setAmount] = useState<string>("0.00");
-  const [selectedCategory, setSelectedCategory] = useState<string>(
-    categories[0]?.id || ""
-  );
-  const [concept, setConcept] = useState("");
-  const [paidBy, setPaidBy] = useState<PaidBy>("SHARED");
-  const [isInstallment, setIsInstallment] = useState(false);
-  const [installmentCurrent, setInstallmentCurrent] = useState("1");
-  const [installmentTotal, setInstallmentTotal] = useState("12");
-  const [date, setDate] = useState(
-    new Date(defaultYear, defaultMonth - 1, new Date().getDate())
-      .toISOString()
-      .split("T")[0]
-  );
-  const [isPending, startTransition] = useTransition();
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [amount, setAmount] = useState<string>("");
+  const [concept, setConcept] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [paidBy, setPaidBy] = useState<"PERSON_1" | "PERSON_2" | "SHARED">("SHARED");
+  const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [isFinanced, setIsFinanced] = useState<boolean>(false);
+  const [currentInstallment, setCurrentInstallment] = useState<string>("1");
+  const [totalInstallments, setTotalInstallments] = useState<string>("12");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0].id);
+    }
+  }, [categories, selectedCategory]);
 
   if (!isOpen) return null;
 
-  const currentCategory = categories.find((c) => c.id === selectedCategory);
-
-  const addPreset = (val: number) => {
+  const handleAddAmount = (val: number) => {
     const current = parseFloat(amount) || 0;
     setAmount((current + val).toFixed(2));
   };
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsedAmount = parseFloat(amount);
+    if (!parsedAmount || parsedAmount <= 0) return;
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setFeedback("Introduce un importe mayor a 0 €");
-      setTimeout(() => setFeedback(null), 3000);
-      return;
-    }
+    setIsSubmitting(true);
 
-    const payload: CreateTransactionInput = {
+    const inputDate = new Date(date);
+    const input: CreateTransactionInput = {
       type: "EXPENSE",
-      amount: numAmount,
-      date,
-      year: parseInt(date.split("-")[0], 10),
-      month: parseInt(date.split("-")[1], 10),
-      concept: concept.trim() || currentCategory?.name || "Gasto",
-      paidBy,
-      installmentCurrent: isInstallment ? parseInt(installmentCurrent, 10) : null,
-      installmentTotal: isInstallment ? parseInt(installmentTotal, 10) : null,
-      categoryId: selectedCategory || null,
+      amount: parsedAmount,
+      concept: concept.trim() || "Gasto común",
+      categoryId: selectedCategory,
+      paidBy: paidBy,
+      date: date,
+      year: inputDate.getFullYear(),
+      month: inputDate.getMonth() + 1,
+      isRecurring: false,
+      installmentCurrent: isFinanced ? parseInt(currentInstallment) : undefined,
+      installmentTotal: isFinanced ? parseInt(totalInstallments) : undefined,
     };
 
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      addToOfflineQueue(payload);
-      setFeedback("Guardado en cola offline");
-      setTimeout(() => {
-        setFeedback(null);
-        resetForm();
-        onClose();
-        if (onSuccess) onSuccess();
-      }, 800);
-      return;
-    }
-
-    startTransition(async () => {
-      const res = await createTransaction(payload);
-      if (res.success) {
-        setFeedback("¡Gasto añadido!");
-        setTimeout(() => {
-          setFeedback(null);
-          resetForm();
-          onClose();
-          if (onSuccess) onSuccess();
-        }, 600);
+    try {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        addToOfflineQueue(input);
       } else {
-        setFeedback("Error: " + res.error);
-        setTimeout(() => setFeedback(null), 3000);
+        await createTransaction(input);
       }
-    });
-  };
-
-  const resetForm = () => {
-    setAmount("0.00");
-    setConcept("");
-    setIsInstallment(false);
-    setInstallmentCurrent("1");
-    setInstallmentTotal("12");
+      setAmount("");
+      setConcept("");
+      setIsFinanced(false);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      console.error("Error creating transaction", err);
+      addToOfflineQueue(input);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/50 backdrop-blur-xs transition-all duration-300">
-      <div className="flex-1" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex flex-col justify-end items-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200">
+      <div className="flex-1 w-full" onClick={onClose} />
 
-      {/* Stitch Quick Entry Bottom Sheet */}
-      <div className="relative w-full max-w-md mx-auto bg-white rounded-t-[32px] shadow-2xl border-t border-slate-200 p-6 space-y-5 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-        {/* Top drag handle */}
-        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto" />
+      <div className="relative w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl shadow-2xl border border-slate-100 max-h-[92vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+        {/* Drag Handle */}
+        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-3 mb-1" />
 
-        {/* Title Header */}
-        <div className="text-center space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">
-            NEW EXPENSE
+        {/* Top Header */}
+        <div className="px-6 py-2 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            NUEVO GASTO
           </span>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-          {/* Large Amount Display */}
-          <div className="flex items-center justify-center gap-1.5 pt-1">
-            <span className="text-3xl font-black text-slate-900">€</span>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
+          {/* Big Amount Display */}
+          <div className="text-center py-2">
+            <div className="inline-flex items-center justify-center gap-1">
+              <span className="text-3xl font-light text-slate-400">€</span>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                autoFocus
+                required
+                className="text-4xl sm:text-5xl font-black text-slate-900 w-48 text-center bg-transparent border-b-2 border-slate-100 focus:border-slate-900 focus:outline-none tracking-tight"
+              />
+            </div>
+
+            {/* Quick Amount Pills */}
+            <div className="flex justify-center gap-2 mt-3">
+              {[5, 10, 20, 50].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => handleAddAmount(val)}
+                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-full active:scale-95 transition-all"
+                >
+                  +{val}€
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Concept Description Input */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Concepto / Descripción
+            </label>
             <input
-              type="number"
-              step="0.01"
-              value={amount === "0.00" ? "" : amount}
-              placeholder="0.00"
-              onChange={handleAmountChange}
-              className="text-4xl sm:text-5xl font-black text-slate-900 text-center w-48 focus:outline-none placeholder:text-slate-300"
-              autoFocus
+              type="text"
+              placeholder="Ej: Compra Mercadona, Farmacia..."
+              value={concept}
+              onChange={(e) => setConcept(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
-        </div>
 
-        {/* Quick Amount Preset Chips (+5€, +10€, +50€) */}
-        <div className="flex items-center justify-center gap-2">
-          {[5, 10, 20, 50].map((val) => (
-            <button
-              key={val}
-              type="button"
-              onClick={() => addPreset(val)}
-              className="px-4 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-transform active:scale-95"
-            >
-              +{val}€
-            </button>
-          ))}
-        </div>
-
-        {/* Feedback message */}
-        {feedback && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-semibold flex items-center justify-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{feedback}</span>
-          </div>
-        )}
-
-        {/* Category Horizontal Selector */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span>Category</span>
-            <span className="text-emerald-600 lowercase font-medium">8 fijas</span>
-          </div>
-
-          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
-            {categories.map((cat) => {
-              const isSelected = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory(cat.id);
-                    if (!concept) setConcept(cat.name);
-                  }}
-                  className="flex flex-col items-center gap-1.5 shrink-0"
-                >
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+          {/* Category Horizontal Selector */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Categoría
+            </label>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+              {categories.map((cat) => {
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`flex flex-col items-center gap-1.5 p-2.5 rounded-2xl min-w-[70px] shrink-0 border transition-all ${
                       isSelected
-                        ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 scale-105"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        ? "bg-[#0F172A] text-white border-[#0F172A] shadow-md scale-105"
+                        : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
-                    {ICON_MAP[cat.icon] || <Package className="w-5 h-5" />}
-                  </div>
-                  <span
-                    className={`text-[10px] text-center max-w-[54px] truncate leading-tight ${
-                      isSelected ? "font-bold text-slate-900" : "text-slate-500"
-                    }`}
-                  >
-                    {cat.name.split("/")[0]}
-                  </span>
-                </button>
-              );
-            })}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white/20">
+                      {ICON_MAP[cat.icon] || <Package className="w-4 h-4" />}
+                    </div>
+                    <span className="text-[10px] font-bold truncate max-w-[60px]">
+                      {cat.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* Concept / Description */}
-        <div>
-          <input
-            type="text"
-            value={concept}
-            onChange={(e) => setConcept(e.target.value)}
-            placeholder="Concepto (ej. Compra semanal, Factura luz...)"
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900"
-          />
-        </div>
-
-        {/* Date Row (Stitch style) */}
-        <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <span>Fecha</span>
+          {/* Paid By Selection (Reparto 50/50 o Persona) */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Pagado Por
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setPaidBy("SHARED")}
+                className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                  paidBy === "SHARED"
+                    ? "bg-[#0F172A] text-white border-[#0F172A] shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200"
+                }`}
+              >
+                Común 50/50
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaidBy("PERSON_1")}
+                className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                  paidBy === "PERSON_1"
+                    ? "bg-[#0F172A] text-white border-[#0F172A] shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200"
+                }`}
+              >
+                Persona 1
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaidBy("PERSON_2")}
+                className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                  paidBy === "PERSON_2"
+                    ? "bg-[#0F172A] text-white border-[#0F172A] shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200"
+                }`}
+              >
+                Persona 2
+              </button>
+            </div>
           </div>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="bg-white px-3 py-1 rounded-xl text-xs font-bold text-slate-800 border border-slate-200 focus:outline-none"
-          />
-        </div>
 
-        {/* Gasto Fraccionado / Financiación Row (Stitch style) */}
-        <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-white rounded-lg border border-slate-200">
-                <CreditCard className="w-4 h-4 text-slate-600" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-slate-800 block">
-                  Gasto Fraccionado
+          {/* Date Picker */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Fecha
+            </label>
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5">
+              <CalendarIcon className="w-4 h-4 text-slate-400" />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none w-full"
+              />
+            </div>
+          </div>
+
+          {/* Gasto Fraccionado / Financiación (Stitch Switch) */}
+          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-slate-600" />
+                <span className="text-xs font-bold text-slate-800">
+                  Gasto Fraccionado / Cuota
                 </span>
-                <span className="text-[10px] text-slate-400">
-                  Cuotas financiadas (ej. 3/12)
-                </span>
               </div>
+              <input
+                type="checkbox"
+                checked={isFinanced}
+                onChange={(e) => setIsFinanced(e.target.checked)}
+                className="w-4 h-4 accent-slate-900 rounded cursor-pointer"
+              />
             </div>
 
-            {/* iOS Switch Toggle */}
+            {isFinanced && (
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 animate-in fade-in">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block mb-1">
+                    Cuota Actual
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={currentInstallment}
+                    onChange={(e) => setCurrentInstallment(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block mb-1">
+                    Total Cuotas
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={totalInstallments}
+                    onChange={(e) => setTotalInstallments(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Submit Action Button */}
+          <div className="pt-2">
             <button
-              type="button"
-              onClick={() => setIsInstallment(!isInstallment)}
-              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                isInstallment ? "bg-emerald-500" : "bg-slate-300"
-              }`}
+              type="submit"
+              disabled={isSubmitting || !amount || parseFloat(amount) <= 0}
+              className="w-full py-4 bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white font-extrabold rounded-2xl text-sm shadow-xl active:scale-[0.99] transition-all flex items-center justify-center gap-2"
             >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  isInstallment ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>{isSubmitting ? "Guardando..." : "Añadir Gasto"}</span>
             </button>
           </div>
-
-          {isInstallment && (
-            <div className="flex items-center gap-2 pt-1">
-              <div className="flex-1">
-                <span className="text-[10px] text-slate-500 font-semibold block mb-0.5">
-                  Cuota Actual
-                </span>
-                <input
-                  type="number"
-                  min="1"
-                  value={installmentCurrent}
-                  onChange={(e) => setInstallmentCurrent(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl py-1 px-2 text-center text-xs font-bold"
-                />
-              </div>
-              <span className="text-sm font-bold text-slate-400 mt-3">/</span>
-              <div className="flex-1">
-                <span className="text-[10px] text-slate-500 font-semibold block mb-0.5">
-                  Total Cuotas
-                </span>
-                <input
-                  type="number"
-                  min="1"
-                  value={installmentTotal}
-                  onChange={(e) => setInstallmentTotal(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl py-1 px-2 text-center text-xs font-bold"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Primary Dark Button: Stitch "Add Entry" */}
-        <button
-          type="button"
-          disabled={isPending || parseFloat(amount) <= 0}
-          onClick={() => handleSubmit()}
-          className="w-full py-4 bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-sm shadow-xl active:scale-[0.99] transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{isPending ? "Añadiendo..." : "Add Entry"}</span>
-        </button>
+        </form>
       </div>
     </div>
   );

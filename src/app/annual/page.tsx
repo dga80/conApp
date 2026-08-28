@@ -13,9 +13,6 @@ import {
   GraduationCap,
   Activity,
   Package,
-  TrendingDown,
-  TrendingUp,
-  AlertCircle,
 } from "lucide-react";
 import { AnnualSummary, CategoryData } from "@/types";
 import { getAnnualSummary, getAllCategories } from "@/lib/actions";
@@ -80,7 +77,7 @@ export default function AnnualMatrixPage() {
 
   return (
     <main className="flex-1 flex flex-col pb-24 bg-[#F8FAFC]">
-      {/* Stitch Top Bar */}
+      {/* Top Bar */}
       <header className="px-5 pt-5 pb-3 flex items-center justify-between sticky top-0 bg-[#F8FAFC]/95 backdrop-blur-xs z-30">
         <div className="flex items-center gap-3">
           <Link
@@ -90,20 +87,20 @@ export default function AnnualMatrixPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <h1 className="text-base font-extrabold text-slate-900 tracking-tight">
-            {year} Annual Overview
+            Resumen Anual {year}
           </h1>
         </div>
 
         <button
           onClick={exportCSV}
-          className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5"
+          className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
         >
           <Download className="w-3.5 h-3.5" />
-          <span>Export CSV</span>
+          <span>Exportar CSV</span>
         </button>
       </header>
 
-      <div className="px-5 space-y-4">
+      <div className="px-5 space-y-4 max-w-5xl mx-auto w-full">
         {isLoading || !data ? (
           <div className="py-24 flex flex-col items-center justify-center space-y-3 text-slate-400">
             <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
@@ -113,10 +110,10 @@ export default function AnnualMatrixPage() {
           <>
             {/* 3 Stitch KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Card 1: Total Spent YTD */}
+              {/* Card 1: Gasto Total Acumulado */}
               <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-1">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Total Spent YTD
+                  Gasto Total Acumulado
                 </span>
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 block">
                   {formatCurrency(data.totalAnnualExpenses)}
@@ -126,10 +123,10 @@ export default function AnnualMatrixPage() {
                 </span>
               </div>
 
-              {/* Card 2: Average Monthly */}
+              {/* Card 2: Media Mensual */}
               <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-1">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Average Monthly
+                  Media Mensual
                 </span>
                 <span className="text-2xl sm:text-3xl font-black text-slate-900 block">
                   {formatCurrency(data.totalAnnualExpenses / 12)}
@@ -139,37 +136,37 @@ export default function AnnualMatrixPage() {
                 </span>
               </div>
 
-              {/* Card 3: Highest Expense (Dark Navy Card in Stitch) */}
+              {/* Card 3: Mayor Gasto (Piso) */}
               <div className="bg-[#0F172A] text-white rounded-3xl p-5 shadow-xs space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  HIGHEST EXPENSE
+                  MAYOR GASTO
                 </span>
                 <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">
-                  PISO (HOUSING)
+                  PISO (VIVIENDA)
                 </span>
                 <span className="text-2xl sm:text-3xl font-black text-white block">
                   {formatCurrency(11603.34)}
                 </span>
                 <span className="text-[11px] text-slate-400 font-medium block pt-0.5">
-                  42% del gasto total anual
+                  42% del presupuesto anual total
                 </span>
               </div>
             </div>
 
-            {/* Stitch Category Matrix Table */}
+            {/* Category Matrix Table */}
             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-extrabold text-slate-900">
-                  Category Matrix
+                  Matriz por Categorías
                 </h2>
                 <div className="flex items-center gap-3 text-xs font-bold">
                   <span className="flex items-center gap-1 text-emerald-600">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    Under
+                    En Presupuesto
                   </span>
                   <span className="flex items-center gap-1 text-rose-500">
                     <span className="w-2 h-2 rounded-full bg-rose-500" />
-                    Over
+                    Exceso
                   </span>
                 </div>
               </div>
@@ -179,7 +176,7 @@ export default function AnnualMatrixPage() {
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                       <th className="py-3 px-2 sticky left-0 bg-white z-10">
-                        Category
+                        Categoría
                       </th>
                       {MONTH_NAMES_SHORT.map((m) => (
                         <th key={m} className="py-3 px-2 text-right">
@@ -187,7 +184,7 @@ export default function AnnualMatrixPage() {
                         </th>
                       ))}
                       <th className="py-3 px-3 text-right text-slate-900 font-black">
-                        Total YTD
+                        Total Anual
                       </th>
                     </tr>
                   </thead>
@@ -226,10 +223,10 @@ export default function AnnualMatrixPage() {
                       </tr>
                     ))}
 
-                    {/* Monthly Total Row */}
+                    {/* Fila Total Mensual */}
                     <tr className="border-t-2 border-slate-200 font-black">
                       <td className="py-3 px-2 sticky left-0 bg-white z-10 text-slate-900 uppercase tracking-wider text-[11px]">
-                        Monthly Total
+                        Total Mensual
                       </td>
                       {data.monthlyExpenses.map((val, idx) => (
                         <td key={idx} className="py-3 px-2 text-right font-mono text-slate-900">
