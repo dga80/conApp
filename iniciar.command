@@ -4,7 +4,7 @@
 cd "/Users/danidev/Desktop/contApp"
 
 echo "=================================================="
-echo "    🏠 Iniciando HomeBudget 2026 (Stitch UI)      "
+echo "          🏠 Iniciando ContApp 2026               "
 echo "=================================================="
 echo ""
 

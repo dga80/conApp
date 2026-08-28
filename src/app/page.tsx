@@ -160,14 +160,14 @@ export default function HomeDashboardPage() {
         <div className="space-y-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold text-sm shadow-md">
-              FP
+              CA
             </div>
             <div>
               <h2 className="font-extrabold text-base text-slate-900 leading-tight">
-                Finanzas Pro
+                ContApp
               </h2>
               <span className="text-xs text-slate-400 font-medium">
-                Plan Ejecutivo 2026
+                Gestión Compartida 2026
               </span>
             </div>
           </div>

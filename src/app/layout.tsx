@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Finanzas Pro | HomeBudget 2026",
-  description: "Sistema Minimalista de Control de Finanzas Compartidas 50/50 y Presupuesto Doméstico 2026.",
+  title: "ContApp | Contabilidad Compartida 2026",
+  description: "ContApp - Sistema Minimalista de Control de Finanzas Compartidas 50/50 y Presupuesto Doméstico 2026.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Finanzas Pro",
+    title: "ContApp",
   },
 };
 

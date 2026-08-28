@@ -1,12 +1,11 @@
 {
-  "name": "HomeBudget 2026",
-  "short_name": "HomeBudget",
-  "description": "Contabilidad Doméstica Compartida 50/50 Mobile-First",
+  "name": "ContApp",
+  "short_name": "ContApp",
+  "description": "ContApp - Contabilidad Doméstica Compartida 50/50",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#090d16",
-  "theme_color": "#059669",
-  "orientation": "portrait-primary",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0F172A",
   "icons": [
     {
       "src": "/icons/icon-192x192.svg",
